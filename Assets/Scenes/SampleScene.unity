@@ -1418,7 +1418,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.4627451}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.50980395}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2545,7 +2545,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zoomSpeed: 100
   minZoom: 10
-  maxZoom: 70
+  maxZoom: 100
   smoothTime: 0.2
 --- !u!1 &527835838
 GameObject:
@@ -2747,6 +2747,65 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &602522270
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 602522271}
+  - component: {fileID: 602522272}
+  m_Layer: 0
+  m_Name: ComponentPlacerManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &602522271
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 602522270}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -31.047894, y: -25.944675, z: -0.36009175}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &602522272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 602522270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf9ca82a5ca296c4596c394be2a8dbc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
+  componentsRoot: {fileID: 0}
+  listContainers: []
+  resistorPrefab: {fileID: 0}
+  capacitorPrefab: {fileID: 0}
+  transistorPrefab: {fileID: 0}
+  icPrefab: {fileID: 0}
+  gridSize: 0.5
+  placementLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  validPlacementColor: {r: 1, g: 1, b: 1, a: 1}
+  invalidPlacementColor: {r: 1, g: 0, b: 0, a: 1}
+  placementSound: {fileID: 0}
+  errorSound: {fileID: 0}
 --- !u!1 &609663437
 GameObject:
   m_ObjectHideFlags: 0
@@ -9881,8 +9940,8 @@ Transform:
   m_GameObject: {fileID: 2074926408}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0, z: 0.7071068, w: -0.7071068}
-  m_LocalPosition: {x: -20.2, y: 0.44, z: 0}
-  m_LocalScale: {x: 372.9718, y: 406.17978, z: 17.273594}
+  m_LocalPosition: {x: -0.1958, y: 0.4825, z: 0}
+  m_LocalScale: {x: 599.24054, y: 793.8222, z: 17.273594}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 864100875}
@@ -9933,3 +9992,4 @@ SceneRoots:
   - {fileID: 264501197}
   - {fileID: 1694506974}
   - {fileID: 268621164}
+  - {fileID: 602522271}
