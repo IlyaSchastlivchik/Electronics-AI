@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 3875335372291488542}
   - component: {fileID: 6243522123117034302}
   - component: {fileID: -1468240642075643508}
+  - component: {fileID: 6947024256412127292}
   m_Layer: 5
   m_Name: ComponentButton_TMP
   m_TagString: Untagged
@@ -156,3 +157,17 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &6947024256412127292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 862698930853026919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb896cd6ea6a5c64eaca464e7572ff5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  clickSound: {fileID: 8300000, guid: 6ab57d9a1a8ae12499399b3a0c6c62f7, type: 3}
+  volume: 1

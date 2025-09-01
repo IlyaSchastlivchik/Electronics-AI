@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 public class ComponentDragger : MonoBehaviour
 {
@@ -36,7 +36,7 @@ public class ComponentDragger : MonoBehaviour
         if (container != null) transform.SetParent(container);
 
         CreatePins();
-        gameObject.AddComponent<CircuitComponent>(); // Убедитесь, что класс CircuitComponent существует
+        gameObject.AddComponent<CircuitComponent>(); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ CircuitComponent пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     }
 
     void CreatePins()
@@ -45,7 +45,7 @@ public class ComponentDragger : MonoBehaviour
         pinsRoot.SetParent(transform);
         pinsRoot.localPosition = Vector3.zero;
 
-        // Пример для резистора (2 пина)
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (2 пїЅпїЅпїЅпїЅ)
         CreatePin(pinsRoot, new Vector2(-0.5f, 0));
         CreatePin(pinsRoot, new Vector2(0.5f, 0));
     }
@@ -57,6 +57,6 @@ public class ComponentDragger : MonoBehaviour
         pin.transform.localPosition = localPosition;
 
         pin.AddComponent<CircleCollider2D>().radius = 0.1f;
-        pin.AddComponent<CircuitPin>(); // Убедитесь, что класс CircuitPin существует
+        pin.AddComponent<CircuitPin>(); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ CircuitPin пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     }
 }

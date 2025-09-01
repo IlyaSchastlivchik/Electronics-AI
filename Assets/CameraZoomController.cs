@@ -1,73 +1,87 @@
 using UnityEngine;
+using System.Collections;
 
 public class CameraZoomController : MonoBehaviour
 {
     [Header("Zoom Settings")]
-    public float zoomSpeed = 5f;
-    public float minZoom = 2f;
-    public float maxZoom = 10f;
+    public float zoomSpeed = 100f;
+    public float minZoom = 10f;
+    public float maxZoom = 100f;
     public float smoothTime = 0.2f;
 
-    private Camera cam;
+    [Header("Start Animation")]
+    public float startZoomDuration = 1f;
+    public AnimationCurve zoomCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+
+    private Camera mainCamera;
     private float targetZoom;
     private float zoomVelocity;
+    private bool isAnimating = false;
 
-    private void Start()
+    void Start()
     {
-        cam = GetComponent<Camera>();
-        if (cam == null)
+        mainCamera = Camera.main;
+
+        if (mainCamera != null)
         {
-            cam = Camera.main;
-            Debug.LogWarning("CameraZoomController: No camera found, using Camera.main");
+            // Устанавливаем начальный zoom на minZoom
+            mainCamera.orthographicSize = minZoom;
+            targetZoom = maxZoom;
+
+            // Запускаем анимацию zoom
+            StartCoroutine(AnimateStartZoom());
         }
-
-        targetZoom = cam.orthographic ? cam.orthographicSize : cam.fieldOfView;
     }
 
-    private void Update()
+    void Update()
     {
-        HandleZoomInput();
-        ApplyZoom();
+        // Если анимация завершена, разрешаем управление мышью
+        if (!isAnimating)
+        {
+            HandleMouseZoom();
+
+            // Применяем сглаживание к zoom
+            mainCamera.orthographicSize = Mathf.SmoothDamp(
+                mainCamera.orthographicSize,
+                targetZoom,
+                ref zoomVelocity,
+                smoothTime
+            );
+        }
     }
 
-    private void HandleZoomInput()
+    // Обработка зума мышью
+    private void HandleMouseZoom()
     {
         float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (scroll == 0f) return;
-
-        if (cam.orthographic)
+        if (scroll != 0.0f)
         {
-            // Для ортографической камеры
             targetZoom -= scroll * zoomSpeed;
             targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
         }
-        else
-        {
-            // Для перспективной камеры
-            targetZoom -= scroll * zoomSpeed * 10f;
-            targetZoom = Mathf.Clamp(targetZoom, minZoom, maxZoom);
-        }
     }
 
-    private void ApplyZoom()
+    // Корутина для анимированного стартового зума
+    private IEnumerator AnimateStartZoom()
     {
-        if (cam.orthographic)
+        isAnimating = true;
+        float elapsedTime = 0f;
+        float startZoom = minZoom;
+
+        while (elapsedTime < startZoomDuration)
         {
-            cam.orthographicSize = Mathf.SmoothDamp(
-                cam.orthographicSize,
-                targetZoom,
-                ref zoomVelocity,
-                smoothTime
-            );
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / startZoomDuration);
+            float curveValue = zoomCurve.Evaluate(t);
+
+            // Прямое установление значения во время анимации
+            mainCamera.orthographicSize = Mathf.Lerp(startZoom, targetZoom, curveValue);
+
+            yield return null;
         }
-        else
-        {
-            cam.fieldOfView = Mathf.SmoothDamp(
-                cam.fieldOfView,
-                targetZoom,
-                ref zoomVelocity,
-                smoothTime
-            );
-        }
+
+        // Убеждаемся, что конечное значение точно установлено
+        mainCamera.orthographicSize = targetZoom;
+        isAnimating = false;
     }
 }

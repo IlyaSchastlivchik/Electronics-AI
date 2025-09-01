@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using System.Collections.Generic;
 using TMPro;
 
@@ -70,21 +70,21 @@ public class ComponentPlacer : MonoBehaviour
     {
         if (prefabMap.ContainsKey(componentType) && prefabMap[componentType] != null)
         {
-            // Создаем новый компонент для перетаскивания
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             currentDraggedComponent = Instantiate(prefabMap[componentType], componentsRoot);
             currentDraggedComponent.name = "DraggingComponent";
             selectedComponentType = componentType;
 
-            // Настраиваем тег
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
             currentDraggedComponent.tag = componentType;
 
-            // Получаем SpriteRenderer для визуальной обратной связи
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ SpriteRenderer пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
             currentComponentRenderer = currentDraggedComponent.GetComponentInChildren<SpriteRenderer>();
 
-            // Отключаем физику во время перетаскивания
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             SetComponentPhysicsEnabled(currentDraggedComponent, false);
 
-            // Включаем все коллайдеры пинов
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
             EnableAllPinColliders(currentDraggedComponent, false);
         }
     }
@@ -93,13 +93,13 @@ public class ComponentPlacer : MonoBehaviour
     {
         if (currentDraggedComponent != null)
         {
-            // Получаем позицию мыши в мировых координатах
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             Vector3 mousePosition = GetMouseWorldPosition();
 
-            // Привязка к сетке
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ
             Vector3 snappedPosition = SnapToGrid(mousePosition);
 
-            // Обновляем позицию компонента
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             currentDraggedComponent.transform.position = snappedPosition;
         }
     }
@@ -108,7 +108,7 @@ public class ComponentPlacer : MonoBehaviour
     {
         if (currentDraggedComponent != null && Input.GetMouseButtonDown(0))
         {
-            // Проверяем, можно ли разместить здесь компонент
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             if (CanPlaceComponent(currentDraggedComponent.transform.position))
             {
                 PlaceComponent();
@@ -121,7 +121,7 @@ public class ComponentPlacer : MonoBehaviour
             }
         }
 
-        // Отмена перетаскивания правой кнопкой мыши или ESC
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ ESC
         if (currentDraggedComponent != null && (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape)))
         {
             CancelDragging();
@@ -139,25 +139,25 @@ public class ComponentPlacer : MonoBehaviour
 
     private void PlaceComponent()
     {
-        // Генерируем ID для компонента
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ID пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         GenerateComponentId();
 
-        // Помещаем в соответствующую папку
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         PlaceInCorrectFolder();
 
-        // Включаем физику для взаимодействия
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         SetComponentPhysicsEnabled(currentDraggedComponent, true);
 
-        // Включаем коллайдеры пинов
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         EnableAllPinColliders(currentDraggedComponent, true);
 
-        // Сбрасываем цвет
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
         if (currentComponentRenderer != null)
         {
             currentComponentRenderer.color = validPlacementColor;
         }
 
-        // Сбрасываем ссылки
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         currentDraggedComponent = null;
         selectedComponentType = null;
         currentComponentRenderer = null;
@@ -171,16 +171,16 @@ public class ComponentPlacer : MonoBehaviour
             circuitComp = currentDraggedComponent.AddComponent<CircuitComponent>();
         }
 
-        // Увеличиваем счетчик для этого типа
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
         if (!componentCounters.ContainsKey(selectedComponentType))
             componentCounters[selectedComponentType] = 0;
 
         componentCounters[selectedComponentType]++;
 
-        // Создаем ID (R1, C2, etc)
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ ID (R1, C2, etc)
         string componentId = $"{selectedComponentType[0]}{componentCounters[selectedComponentType]}";
 
-        // Устанавливаем данные компонента
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         circuitComp.SetComponentData(componentId, selectedComponentType, componentCounters[selectedComponentType]);
     }
 
@@ -207,17 +207,17 @@ public class ComponentPlacer : MonoBehaviour
 
     private bool CanPlaceComponent(Vector3 position)
     {
-        // Проверяем коллизии с другими компонентами
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         Collider2D[] colliders = Physics2D.OverlapCircleAll(position, 0.3f, placementLayerMask);
 
         foreach (Collider2D collider in colliders)
         {
-            // Игнорируем пины, провода и самого себя
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
             if (collider.CompareTag("Pin") || collider.CompareTag("Wire") ||
                 collider.transform.IsChildOf(currentDraggedComponent.transform))
                 continue;
 
-            // Если есть другой компонент - нельзя разместить
+            // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             if (collider.CompareTag("Resistor") || collider.CompareTag("Capacitor") ||
                 collider.CompareTag("Transistor") || collider.CompareTag("IC"))
                 return false;
@@ -283,19 +283,19 @@ public class ComponentPlacer : MonoBehaviour
         }
     }
 
-    // Публичные методы для вызова из UI
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ UI
     public void OnResistorButtonClick() => SelectComponent("Resistor");
     public void OnCapacitorButtonClick() => SelectComponent("Capacitor");
     public void OnTransistorButtonClick() => SelectComponent("Transistor");
     public void OnICButtonClick() => SelectComponent("IC");
 
-    // Метод для сброса счетчиков (например, при загрузке новой схемы)
+    // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ)
     public void ResetCounters()
     {
         componentCounters.Clear();
     }
 
-    // Метод для получения статистики
+    // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     public Dictionary<string, int> GetComponentStatistics()
     {
         return new Dictionary<string, int>(componentCounters);

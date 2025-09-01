@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using UnityEngine.UI;
 
 public class ToolbarButton : MonoBehaviour
@@ -17,10 +17,10 @@ public class ToolbarButton : MonoBehaviour
         }
     }
 
-    public void Initialize(ComponentClass componentClass) // Убрали ComponentManager параметр
+    public void Initialize(ComponentClass componentClass) // пїЅпїЅпїЅпїЅпїЅпїЅ ComponentManager пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     {
         _componentClass = componentClass;
-        iconImage.sprite = componentClass.toolbarIcon; // Используем toolbarIcon
+        iconImage.sprite = componentClass.toolbarIcon; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ toolbarIcon
         GetComponent<Button>().onClick.AddListener(OnButtonClick);
     }
 
@@ -50,21 +50,21 @@ public class ToolbarButton : MonoBehaviour
     }
 
     private void CreateDropdownMenu()
-{
-    _dropdownInstance = Instantiate(dropdownPrefab, transform.parent.parent);
-    _dropdownInstance.transform.position = transform.position + Vector3.down * 80;
-    
-    // Получаем компонент DropdownController
-    DropdownController controller = _dropdownInstance.GetComponent<DropdownController>();
-    if (controller != null)
     {
-        controller.Initialize(_componentClass, this);
+        _dropdownInstance = Instantiate(dropdownPrefab, transform.parent.parent);
+        _dropdownInstance.transform.position = transform.position + Vector3.down * 80;
+
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ DropdownController
+        DropdownController controller = _dropdownInstance.GetComponent<DropdownController>();
+        if (controller != null)
+        {
+            controller.Initialize(_componentClass, this);
+        }
+        else
+        {
+            Debug.LogError("DropdownController component missing on dropdown prefab!");
+        }
     }
-    else
-    {
-        Debug.LogError("DropdownController component missing on dropdown prefab!");
-    }
-}
 
     public void CreateComponent(GameObject prefab)
     {
