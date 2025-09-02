@@ -272,6 +272,7 @@ GameObject:
   - component: {fileID: 5230096830204767650}
   - component: {fileID: 6606927733548932515}
   - component: {fileID: 2766138103118958561}
+  - component: {fileID: 569298131890978084}
   m_Layer: 0
   m_Name: DraggableCircle
   m_TagString: Untagged
@@ -374,6 +375,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3df60402143510449ece02576659139, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gridSize: 1
 --- !u!50 &6606927733548932515
 Rigidbody2D:
   serializedVersion: 4
@@ -446,6 +448,23 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 11.584108, y: 7.4373283}
   m_EdgeRadius: 0
+--- !u!114 &569298131890978084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3957617863194509370}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b8b06893a72ad74380a8b48e20ef02f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grabClip: {fileID: 8300000, guid: 6ab57d9a1a8ae12499399b3a0c6c62f7, type: 3}
+  dragClip: {fileID: 8300000, guid: 0a545765b73905c4794d6b784ac1b85d, type: 3}
+  dropClip: {fileID: 8300000, guid: 6ab57d9a1a8ae12499399b3a0c6c62f7, type: 3}
+  oneShotSource: {fileID: 0}
+  loopSource: {fileID: 0}
 --- !u!1 &4428753801013963654
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,47 +1,99 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
+using System;
 
-[RequireComponent(typeof(Rigidbody2D))]
-public class DraggableComponent : MonoBehaviour, IDragHandler, IEndDragHandler
+public class DraggableComponent : MonoBehaviour
 {
-    private SnapGridSystem gridSystem;
-    private bool isDragging = false;
+    private Vector3 screenPoint;
     private Vector3 offset;
     private Rigidbody2D rb;
+    private bool isDragging = false;
+    private bool wasKinematicInitially; // Сохраняем исходное состояние kinematic
 
-    private void Start()
+    // События для обработки звуков
+    public event Action OnGrab;
+    public event Action OnDrag;
+    public event Action OnDrop;
+
+    [Header("Grid Settings")]
+    [SerializeField] private float gridSize = 1.0f; // Размер ячейки сетки
+
+    void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        gridSystem = FindObjectOfType<SnapGridSystem>();
-    }
 
-    public void OnDrag(PointerEventData eventData)
-    {
-        if (!isDragging)
+        if (rb == null)
         {
-            Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            offset = transform.position - mouseWorldPos;
-            offset.z = 0;
-            isDragging = true;
+            Debug.LogError("Rigidbody2D not found on " + gameObject.name + ". Please add Rigidbody2D component.");
+            return;
         }
 
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0;
-        rb.MovePosition(mousePos + offset);
+        // Сохраняем исходное состояние kinematic
+        wasKinematicInitially = rb.isKinematic;
     }
 
-    public void OnEndDrag(PointerEventData eventData)
+    void OnMouseDown()
     {
-        isDragging = false;
-        SnapToGrid();
+        if (rb != null)
+        {
+            screenPoint = Camera.main.WorldToScreenPoint(transform.position);
+            offset = transform.position - Camera.main.ScreenToWorldPoint(
+                new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
+
+            // Сохраняем текущее состояние и делаем kinematic для плавного перетаскивания
+            rb.isKinematic = true;
+            isDragging = true;
+
+            OnGrab?.Invoke();
+        }
     }
 
+    void OnMouseDrag()
+    {
+        if (isDragging && rb != null)
+        {
+            Vector3 cursorScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z);
+            Vector3 cursorPosition = Camera.main.ScreenToWorldPoint(cursorScreenPoint) + offset;
+            transform.position = cursorPosition;
+
+            OnDrag?.Invoke();
+        }
+    }
+
+    void OnMouseUp()
+    {
+        if (rb != null)
+        {
+            isDragging = false;
+
+            // Примагничивание к сетке
+            SnapToGrid();
+
+            // Восстанавливаем исходное состояние kinematic
+            rb.isKinematic = wasKinematicInitially;
+
+            OnDrop?.Invoke();
+        }
+    }
+
+    // Метод примагничивания к сетке
     private void SnapToGrid()
     {
-        if (gridSystem != null)
-        {
-            Vector3 nearestPoint = gridSystem.GetNearestPoint(transform.position);
-            rb.MovePosition(nearestPoint);
-        }
+        // Округляем позицию до ближайшей ячейки сетки 
+        float snapInverse = 1.0f / gridSize;
+        float x = Mathf.Round(transform.position.x * snapInverse) / snapInverse;
+        float y = Mathf.Round(transform.position.y * snapInverse) / snapInverse;
+
+        // Устанавливаем новую позицию
+        transform.position = new Vector3(x, y, transform.position.z);
+    }
+
+    // Метод для примагничивания к конкретной позиции (если нужен извне)
+    public void SnapToPosition(Vector3 gridPosition)
+    {
+        float snapInverse = 1.0f / gridSize;
+        float x = Mathf.Round(gridPosition.x * snapInverse) / snapInverse;
+        float y = Mathf.Round(gridPosition.y * snapInverse) / snapInverse;
+
+        transform.position = new Vector3(x, y, transform.position.z);
     }
 }
