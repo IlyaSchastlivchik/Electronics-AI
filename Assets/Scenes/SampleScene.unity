@@ -1354,8 +1354,10 @@ GameObject:
   - component: {fileID: 334080079}
   - component: {fileID: 334080078}
   - component: {fileID: 334080081}
+  - component: {fileID: 334080082}
+  - component: {fileID: 334080083}
   m_Layer: 5
-  m_Name: ToolbarPanel
+  m_Name: MainMenuPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1458,6 +1460,41 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
   m_VerticalFit: 0
+--- !u!114 &334080082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 334080076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 951e14196f7ccb74bb6189d8b6cb706d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  database: {fileID: 11400000, guid: fbd7fe2da9e00db468d0a069aee09502, type: 2}
+  mainMenuButtonPrefab: {fileID: 6544775891838396699, guid: 5f55caf1eb75a4849843f4d64d920fb8, type: 3}
+  mainMenuPanel: {fileID: 334080077}
+--- !u!114 &334080083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 334080076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &340811765
 GameObject:
   m_ObjectHideFlags: 0
@@ -7580,7 +7617,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   database: {fileID: 11400000, guid: fbd7fe2da9e00db468d0a069aee09502, type: 2}
   componentButtonPrefab: {fileID: 862698930853026919, guid: c664912488b8c004cbd6a8125983790e, type: 3}
-  toolbarPanel: {fileID: 334080077}
 --- !u!1 &1718735433
 GameObject:
   m_ObjectHideFlags: 0

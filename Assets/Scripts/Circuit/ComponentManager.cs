@@ -6,11 +6,16 @@ public class ComponentManager : MonoBehaviour
     public static ComponentManager Instance { get; private set; }
 
     [SerializeField] private ComponentDatabase database;
+
+    // Убрали ссылку на toolbarPanel, так как теперь панели создаются динамически
+    // [SerializeField] private Transform toolbarPanel;
+
     [SerializeField] private GameObject componentButtonPrefab;
-    [SerializeField] private Transform toolbarPanel;
 
     private Dictionary<string, int> _counters = new Dictionary<string, int>();
     private Dictionary<string, Transform> _listContainers = new Dictionary<string, Transform>();
+    private Dictionary<KeyCode, ComponentClass> _menuHotkeys = new Dictionary<KeyCode, ComponentClass>();
+    private Dictionary<KeyCode, ComponentSubclass> _componentHotkeys = new Dictionary<KeyCode, ComponentSubclass>();
 
     void Awake()
     {
@@ -23,16 +28,10 @@ public class ComponentManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Проверяем необходимые ссылки перед инициализацией
+        // Проверка назначения компонентов
         if (database == null)
         {
             Debug.LogError("Database not assigned in ComponentManager!");
-            return;
-        }
-
-        if (toolbarPanel == null)
-        {
-            Debug.LogError("Toolbar Panel not assigned!");
             return;
         }
 
@@ -48,7 +47,10 @@ public class ComponentManager : MonoBehaviour
     void Initialize()
     {
         CreateListContainers();
-        GenerateToolbarButtons();
+        InitializeHotkeyDictionaries();
+
+        // Больше не генерируем кнопки здесь - это будет делать MainMenuManager
+        // GenerateToolbarButtons();
     }
 
     void CreateListContainers()
@@ -60,7 +62,7 @@ public class ComponentManager : MonoBehaviour
         }
 
         GameObject containersRoot = new GameObject("ComponentContainers");
-        DontDestroyOnLoad(containersRoot);
+        containersRoot.transform.SetParent(transform);
 
         foreach (ComponentClass cls in database.classes)
         {
@@ -70,7 +72,7 @@ public class ComponentManager : MonoBehaviour
                 continue;
             }
 
-            // Проверяем, нет ли уже контейнера с таким ID
+            // Проверяем, что нет дубликатов ID
             if (_listContainers.ContainsKey(cls.id))
             {
                 Debug.LogWarning($"Duplicate container ID detected: {cls.id}");
@@ -83,32 +85,78 @@ public class ComponentManager : MonoBehaviour
         }
     }
 
-    void GenerateToolbarButtons()
+    void InitializeHotkeyDictionaries()
     {
-        if (database.classes == null)
-        {
-            Debug.LogError("Database classes list is null!");
-            return;
-        }
-
+        // Инициализируем словари горячих клавиш
         foreach (ComponentClass cls in database.classes)
         {
-            // Создаем кнопку только для классов с валидными данными
-            if (string.IsNullOrEmpty(cls.id)) continue;
-
-            GameObject button = Instantiate(componentButtonPrefab, toolbarPanel);
-            button.name = $"{cls.id}Button";
-
-            ToolbarButton buttonScript = button.GetComponent<ToolbarButton>();
-            if (buttonScript != null)
+            if (cls.hotkey != KeyCode.None)
             {
-                buttonScript.Initialize(cls);
+                if (_menuHotkeys.ContainsKey(cls.hotkey))
+                {
+                    Debug.LogWarning($"Duplicate hotkey {cls.hotkey} detected for menu {cls.id}");
+                }
+                else
+                {
+                    _menuHotkeys.Add(cls.hotkey, cls);
+                }
             }
-            else
+
+            // Добавляем горячие клавиши для компонентов
+            foreach (ComponentSubclass subclass in cls.subclasses)
             {
-                Debug.LogError($"ToolbarButton component missing on button prefab for {cls.id}");
+                if (subclass.hotkey != KeyCode.None)
+                {
+                    if (_componentHotkeys.ContainsKey(subclass.hotkey))
+                    {
+                        Debug.LogWarning($"Duplicate hotkey {subclass.hotkey} detected for component {subclass.name}");
+                    }
+                    else
+                    {
+                        _componentHotkeys.Add(subclass.hotkey, subclass);
+                    }
+                }
             }
         }
+    }
+
+    void Update()
+    {
+        // Обработка горячих клавиш для меню
+        foreach (var kvp in _menuHotkeys)
+        {
+            if (Input.GetKeyDown(kvp.Key))
+            {
+                if (MainMenuManager.Instance != null)
+                {
+                    MainMenuManager.Instance.ActivateToolbarPanel(kvp.Value);
+                }
+                else
+                {
+                    Debug.LogWarning("MainMenuManager instance is null");
+                }
+            }
+        }
+
+        // Обработка горячих клавиш для компонентов
+        foreach (var kvp in _componentHotkeys)
+        {
+            if (Input.GetKeyDown(kvp.Key))
+            {
+                CreateComponentFromHotkey(kvp.Value);
+                break;
+            }
+        }
+    }
+
+    void CreateComponentFromHotkey(ComponentSubclass subclass)
+    {
+        GameObject newComponent = Instantiate(subclass.prefab);
+        ComponentDragger dragger = newComponent.AddComponent<ComponentDragger>();
+
+        // Используем имя подкласса как префикс
+        string prefix = subclass.name.Replace(" ", "");
+        dragger.Initialize(prefix);
     }
 
     public string GenerateComponentID(string prefix)
@@ -141,5 +189,21 @@ public class ComponentManager : MonoBehaviour
 
         Debug.LogWarning($"Container not found for prefix: {prefix}");
         return null;
+    }
+
+    public ComponentClass GetComponentClassById(string id)
+    {
+        return database.classes.Find(cls => cls.id == id);
+    }
+
+    public List<ComponentClass> GetAllComponentClasses()
+    {
+        return database.classes;
+    }
+
+    // Метод для получения префаба кнопки компонента
+    public GameObject GetComponentButtonPrefab()
+    {
+        return componentButtonPrefab;
     }
 }

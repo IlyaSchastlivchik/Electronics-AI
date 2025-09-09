@@ -1,76 +1,31 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UI; // Добавьте эту строку
 
 public class ToolbarButton : MonoBehaviour
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private GameObject dropdownPrefab;
 
-    private ComponentClass _componentClass;
+    private ComponentSubclass _componentSubclass;
     private GameObject _dropdownInstance;
 
-    void Awake()
+    public void Initialize(ComponentSubclass subclass)
     {
-        if (iconImage == null)
-        {
-            iconImage = GetComponent<Image>();
-        }
-    }
-
-    public void Initialize(ComponentClass componentClass) // ������ ComponentManager ��������
-    {
-        _componentClass = componentClass;
-        iconImage.sprite = componentClass.toolbarIcon; // ���������� toolbarIcon
+        _componentSubclass = subclass;
+        iconImage.sprite = subclass.icon;
         GetComponent<Button>().onClick.AddListener(OnButtonClick);
     }
 
     private void OnButtonClick()
     {
-        if (_componentClass.subclasses.Count > 1)
-        {
-            ToggleDropdownMenu();
-        }
-        else if (_componentClass.subclasses.Count == 1)
-        {
-            CreateComponent(_componentClass.subclasses[0].prefab);
-        }
-    }
-
-    private void ToggleDropdownMenu()
-    {
-        if (_dropdownInstance == null)
-        {
-            CreateDropdownMenu();
-        }
-        else
-        {
-            Destroy(_dropdownInstance);
-            _dropdownInstance = null;
-        }
-    }
-
-    private void CreateDropdownMenu()
-    {
-        _dropdownInstance = Instantiate(dropdownPrefab, transform.parent.parent);
-        _dropdownInstance.transform.position = transform.position + Vector3.down * 80;
-
-        // �������� ��������� DropdownController
-        DropdownController controller = _dropdownInstance.GetComponent<DropdownController>();
-        if (controller != null)
-        {
-            controller.Initialize(_componentClass, this);
-        }
-        else
-        {
-            Debug.LogError("DropdownController component missing on dropdown prefab!");
-        }
+        CreateComponent(_componentSubclass.prefab);
     }
 
     public void CreateComponent(GameObject prefab)
     {
         GameObject newComponent = Instantiate(prefab);
         ComponentDragger dragger = newComponent.AddComponent<ComponentDragger>();
-        dragger.Initialize(_componentClass.id);
+        dragger.Initialize(_componentSubclass.name); // Используем имя подкласса как префикс
 
         if (_dropdownInstance != null)
         {

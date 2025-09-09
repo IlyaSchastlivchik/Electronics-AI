@@ -1,6 +1,7 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 
+// Этот файл должен быть создан как ComponentDatabase.cs
 [CreateAssetMenu(fileName = "ComponentDatabase", menuName = "Circuit/Component Database")]
 public class ComponentDatabase : ScriptableObject
 {
@@ -10,9 +11,11 @@ public class ComponentDatabase : ScriptableObject
 [System.Serializable]
 public class ComponentClass
 {
-    public string id; // Убедитесь, что используется id, а не className
+    public string id;
     public string displayName;
-    public Sprite toolbarIcon; // Изменили icon на toolbarIcon
+    public Sprite toolbarIcon;
+    public KeyCode hotkey; // Горячая клавиша для активации меню
+    public GameObject toolbarPanelPrefab; // Ссылка на префаб панели инструментов
     public List<ComponentSubclass> subclasses = new List<ComponentSubclass>();
 }
 
@@ -22,4 +25,5 @@ public class ComponentSubclass
     public string name;
     public Sprite icon;
     public GameObject prefab;
+    public KeyCode hotkey; // Горячая клавиша для создания компонента
 }
