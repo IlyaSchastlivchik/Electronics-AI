@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,7 +9,7 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private ComponentDatabase database;
     [SerializeField] private GameObject mainMenuButtonPrefab;
     [SerializeField] private RectTransform mainMenuPanel;
-    [SerializeField] private RectTransform toolbarsContainer; // Контейнер для панелей инструментов
+    [SerializeField] private RectTransform toolbarsContainer;
 
     private void Awake()
     {
@@ -27,8 +28,6 @@ public class MainMenuManager : MonoBehaviour
             container.transform.SetParent(mainMenuPanel.parent);
             container.AddComponent<RectTransform>();
             toolbarsContainer = container.GetComponent<RectTransform>();
-
-            // Настраиваем контейнер
             SetupToolbarsContainer();
         }
     }
@@ -64,11 +63,7 @@ public class MainMenuManager : MonoBehaviour
     public void ActivateToolbarPanel(ComponentClass componentClass)
     {
         // Деактивируем все панели с тегом ToolbarPanel
-        foreach (Transform child in toolbarsContainer)
-        {
-            if (child.CompareTag("ToolbarPanel"))
-                child.gameObject.SetActive(false);
-        }
+        CloseAllToolbarPanels();
 
         // Активируем нужную панель
         GameObject panel = GameObject.Find($"Toolbar_{componentClass.id}");
@@ -101,9 +96,17 @@ public class MainMenuManager : MonoBehaviour
         ForceLayoutUpdate(panel.GetComponent<RectTransform>());
     }
 
+    public void CloseAllToolbarPanels()
+    {
+        foreach (Transform child in toolbarsContainer)
+        {
+            if (child.CompareTag("ToolbarPanel"))
+                child.gameObject.SetActive(false);
+        }
+    }
+
     private void CopyRectTransformSettings(RectTransform target, RectTransform source)
     {
-        // Копируем все основные параметры RectTransform 
         target.anchorMin = source.anchorMin;
         target.anchorMax = source.anchorMax;
         target.anchoredPosition = source.anchoredPosition;
@@ -111,8 +114,6 @@ public class MainMenuManager : MonoBehaviour
         target.pivot = source.pivot;
         target.localRotation = source.localRotation;
         target.localScale = source.localScale;
-
-        // Копируем смещения 
         target.offsetMin = source.offsetMin;
         target.offsetMax = source.offsetMax;
     }
@@ -121,11 +122,8 @@ public class MainMenuManager : MonoBehaviour
     {
         if (mainMenuPanel != null)
         {
-            // Вычисляем позицию под главным меню
             Vector2 menuPosition = mainMenuPanel.anchoredPosition;
             float menuHeight = mainMenuPanel.rect.height;
-
-            // Устанавливаем позицию панели инструментов
             panelTransform.anchoredPosition = new Vector2(
                 menuPosition.x,
                 menuPosition.y - menuHeight
@@ -135,17 +133,13 @@ public class MainMenuManager : MonoBehaviour
 
     private void ForceLayoutUpdate(RectTransform rectTransform)
     {
-        // Принудительное обновление layout 
         Canvas.ForceUpdateCanvases();
         rectTransform.ForceUpdateRectTransforms();
-
-        // Дополнительное обновление для LayoutGroup 
         LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
     }
 
     private void Update()
     {
-        // Проверка горячих клавиш для активации меню
         foreach (ComponentClass cls in database.classes)
         {
             if (Input.GetKeyDown(cls.hotkey))
@@ -153,6 +147,12 @@ public class MainMenuManager : MonoBehaviour
                 ActivateToolbarPanel(cls);
                 break;
             }
+        }
+
+        // Закрытие всех панелей по Escape
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            CloseAllToolbarPanels();
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.UI; // Добавьте эту строку
+using UnityEngine.UI;
 
 public class ToolbarButton : MonoBehaviour
 {
@@ -8,6 +8,14 @@ public class ToolbarButton : MonoBehaviour
 
     private ComponentSubclass _componentSubclass;
     private GameObject _dropdownInstance;
+
+    void Awake()
+    {
+        if (iconImage == null)
+        {
+            iconImage = GetComponent<Image>();
+        }
+    }
 
     public void Initialize(ComponentSubclass subclass)
     {
@@ -21,16 +29,22 @@ public class ToolbarButton : MonoBehaviour
         CreateComponent(_componentSubclass.prefab);
     }
 
-    public void CreateComponent(GameObject prefab)
+    private void CreateComponent(GameObject prefab)
     {
         GameObject newComponent = Instantiate(prefab);
         ComponentDragger dragger = newComponent.AddComponent<ComponentDragger>();
-        dragger.Initialize(_componentSubclass.name); // Используем имя подкласса как префикс
+        dragger.Initialize(_componentSubclass.name);
 
         if (_dropdownInstance != null)
         {
             Destroy(_dropdownInstance);
             _dropdownInstance = null;
+        }
+
+        // Закрываем все панели инструментов после создания компонента
+        if (MainMenuManager.Instance != null)
+        {
+            MainMenuManager.Instance.CloseAllToolbarPanels();
         }
     }
 }

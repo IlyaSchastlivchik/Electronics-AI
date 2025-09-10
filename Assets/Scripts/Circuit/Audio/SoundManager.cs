@@ -37,4 +37,12 @@ public class SoundManager : MonoBehaviour
             audioSource.PlayOneShot(mouseClickSound);
         }
     }
+
+    public void PlaySound(AudioClip clip, float volume = 1.0f)
+    {
+        if (clip != null)
+        {
+            audioSource.PlayOneShot(clip, volume);
+        }
+    }
 }

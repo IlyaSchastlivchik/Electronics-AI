@@ -36,7 +36,13 @@ public class ComponentDragger : MonoBehaviour
         if (container != null) transform.SetParent(container);
 
         CreatePins();
-        gameObject.AddComponent<CircuitComponent>(); // ���������, ��� ����� CircuitComponent ����������
+        gameObject.AddComponent<CircuitComponent>();
+
+        // Закрываем все панели инструментов после размещения компонента
+        if (MainMenuManager.Instance != null)
+        {
+            MainMenuManager.Instance.CloseAllToolbarPanels();
+        }
     }
 
     void CreatePins()
@@ -45,7 +51,6 @@ public class ComponentDragger : MonoBehaviour
         pinsRoot.SetParent(transform);
         pinsRoot.localPosition = Vector3.zero;
 
-        // ������ ��� ��������� (2 ����)
         CreatePin(pinsRoot, new Vector2(-0.5f, 0));
         CreatePin(pinsRoot, new Vector2(0.5f, 0));
     }
@@ -57,6 +62,6 @@ public class ComponentDragger : MonoBehaviour
         pin.transform.localPosition = localPosition;
 
         pin.AddComponent<CircleCollider2D>().radius = 0.1f;
-        pin.AddComponent<CircuitPin>(); // ���������, ��� ����� CircuitPin ����������
+        pin.AddComponent<CircuitPin>();
     }
 }

@@ -16,6 +16,9 @@ public class MainMenuButton : MonoBehaviour
 
     private void OnButtonClick()
     {
-        MainMenuManager.Instance.ActivateToolbarPanel(_componentClass);
+        if (MainMenuManager.Instance != null)
+        {
+            MainMenuManager.Instance.ActivateToolbarPanel(_componentClass);
+        }
     }
 }

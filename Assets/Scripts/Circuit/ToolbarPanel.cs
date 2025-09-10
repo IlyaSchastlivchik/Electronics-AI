@@ -34,15 +34,12 @@ public class ToolbarPanel : MonoBehaviour
             }
         }
 
-        // Принудительное обновление layout после создания кнопок 
         ForceLayoutUpdate();
     }
 
     private void ForceLayoutUpdate()
     {
         Canvas.ForceUpdateCanvases();
-
-        // Обновляем LayoutGroup если он есть
         HorizontalOrVerticalLayoutGroup layoutGroup = GetComponent<HorizontalOrVerticalLayoutGroup>();
         if (layoutGroup != null)
         {
@@ -52,7 +49,6 @@ public class ToolbarPanel : MonoBehaviour
 
     private void Update()
     {
-        // Проверка горячих клавиш для компонентов
         if (!gameObject.activeSelf) return;
 
         foreach (ComponentSubclass subclass in _componentClass.subclasses)
@@ -64,10 +60,10 @@ public class ToolbarPanel : MonoBehaviour
             }
         }
 
-        // Возврат в главное меню по Escape
+        // Закрытие панели по Escape
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            ReturnToMainMenu();
+            gameObject.SetActive(false);
         }
     }
 
@@ -76,10 +72,11 @@ public class ToolbarPanel : MonoBehaviour
         GameObject newComponent = Instantiate(prefab);
         ComponentDragger dragger = newComponent.AddComponent<ComponentDragger>();
         dragger.Initialize(_componentClass.id);
-    }
 
-    private void ReturnToMainMenu()
-    {
-        gameObject.SetActive(false);
+        // Закрываем все панели инструментов после создания компонента
+        if (MainMenuManager.Instance != null)
+        {
+            MainMenuManager.Instance.CloseAllToolbarPanels();
+        }
     }
 }
