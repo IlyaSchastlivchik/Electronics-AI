@@ -170,3 +170,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   iconImage: {fileID: 926607013248919731}
+  tooltipTemplate: "Hello: \r\n[ID/DISPLAY_NAME] - element component menu\r\nPress
+    and choose"
