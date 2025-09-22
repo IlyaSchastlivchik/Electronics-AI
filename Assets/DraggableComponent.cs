@@ -7,7 +7,8 @@ public class DraggableComponent : MonoBehaviour
     private Vector3 offset;
     private Rigidbody2D rb;
     private bool isDragging = false;
-    private bool wasKinematicInitially; // Сохраняем исходное состояние kinematic
+    private bool wasKinematicInitially;
+    private DragCameraController cameraController; // Добавляем ссылку на контроллер камеры
 
     // События для обработки звуков
     public event Action OnGrab;
@@ -29,6 +30,13 @@ public class DraggableComponent : MonoBehaviour
 
         // Сохраняем исходное состояние kinematic
         wasKinematicInitially = rb.isKinematic;
+
+        // Находим контроллер камеры
+        cameraController = Camera.main.GetComponent<DragCameraController>();
+        if (cameraController == null)
+        {
+            Debug.LogError("DragCameraController not found on Main Camera!");
+        }
     }
 
     void OnMouseDown()
@@ -42,6 +50,12 @@ public class DraggableComponent : MonoBehaviour
             // Сохраняем текущее состояние и делаем kinematic для плавного перетаскивания
             rb.isKinematic = true;
             isDragging = true;
+
+            // Блокируем перемещение камеры
+            if (cameraController != null)
+            {
+                cameraController.SetCameraDragEnabled(false);
+            }
 
             OnGrab?.Invoke();
         }
@@ -70,6 +84,12 @@ public class DraggableComponent : MonoBehaviour
 
             // Восстанавливаем исходное состояние kinematic
             rb.isKinematic = wasKinematicInitially;
+
+            // Разблокируем перемещение камеры
+            if (cameraController != null)
+            {
+                cameraController.SetCameraDragEnabled(true);
+            }
 
             OnDrop?.Invoke();
         }

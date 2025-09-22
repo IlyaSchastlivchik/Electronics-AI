@@ -25,8 +25,58 @@ public class CircuitComponent : MonoBehaviour
             componentId = name;
         }
 
+        // Автоматически определяем тип и номер компонента на основе имени
+        ParseComponentName();
+
         // Обновляем текстовую метку
         UpdateLabel();
+    }
+
+    private void ParseComponentName()
+    {
+        // Если тип и номер уже установлены, ничего не делаем
+        if (!string.IsNullOrEmpty(componentType) && componentNumber != 0)
+            return;
+
+        // Пытаемся извлечь тип и номер из имени объекта
+        string objectName = gameObject.name;
+
+        // Ищем первую цифру в имени
+        int firstDigitIndex = -1;
+        for (int i = 0; i < objectName.Length; i++)
+        {
+            if (char.IsDigit(objectName[i]))
+            {
+                firstDigitIndex = i;
+                break;
+            }
+        }
+
+        if (firstDigitIndex > 0)
+        {
+            // Извлекаем тип (все символы до первой цифры)
+            componentType = objectName.Substring(0, firstDigitIndex);
+
+            // Извлекаем номер (все цифры после типа)
+            string numberPart = objectName.Substring(firstDigitIndex);
+            if (int.TryParse(numberPart, out int number))
+            {
+                componentNumber = number;
+            }
+            else
+            {
+                componentNumber = 0;
+            }
+        }
+        else
+        {
+            // Если не удалось извлечь тип и номер, используем значения по умолчанию
+            componentType = "C";
+            componentNumber = 0;
+        }
+
+        // Обновляем ID на основе типа и номера
+        componentId = $"{componentType}{componentNumber}";
     }
 
     public void UpdateLabel()
@@ -73,5 +123,12 @@ public class CircuitComponent : MonoBehaviour
     public string GetFullName()
     {
         return $"{componentType} {componentNumber} ({componentId})";
+    }
+
+    public void RenumberComponent(int newNumber)
+    {
+        componentNumber = newNumber;
+        componentId = $"{componentType}{componentNumber}";
+        UpdateLabel();
     }
 }

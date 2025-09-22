@@ -36,7 +36,31 @@ public class ComponentDragger : MonoBehaviour
         if (container != null) transform.SetParent(container);
 
         CreatePins();
-        gameObject.AddComponent<CircuitComponent>();
+
+        // Добавляем компонент CircuitComponent
+        CircuitComponent circuitComponent = gameObject.AddComponent<CircuitComponent>();
+
+        // Устанавливаем данные компонента на основе имени
+        string componentName = name;
+        int firstDigitIndex = -1;
+        for (int i = 0; i < componentName.Length; i++)
+        {
+            if (char.IsDigit(componentName[i]))
+            {
+                firstDigitIndex = i;
+                break;
+            }
+        }
+
+        if (firstDigitIndex > 0)
+        {
+            string type = componentName.Substring(0, firstDigitIndex);
+            string numberPart = componentName.Substring(firstDigitIndex);
+            if (int.TryParse(numberPart, out int number))
+            {
+                circuitComponent.SetComponentData(componentName, type, number);
+            }
+        }
 
         // Закрываем все панели инструментов после размещения компонента
         if (MainMenuManager.Instance != null)
