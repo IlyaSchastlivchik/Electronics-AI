@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8161338262052228979}
   - component: {fileID: 3164159349973243898}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: LoopAudioSource
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -138,7 +138,7 @@ GameObject:
   m_Component:
   - component: {fileID: 106056876658143803}
   - component: {fileID: 474908758943151709}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Capasitor_16
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -230,7 +230,7 @@ GameObject:
   - component: {fileID: 4936807826006912003}
   - component: {fileID: 5669580694285899862}
   - component: {fileID: 248914171269672556}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DraggableCircle (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -435,7 +435,7 @@ GameObject:
   - component: {fileID: 6322142645788933474}
   - component: {fileID: 2314074643833197855}
   - component: {fileID: 8682379488525783972}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Label (TextMeshPro)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -481,7 +481,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  - {fileID: 2100000, guid: 9ad269c99dcf42b7aedefd83dd5a7b9d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -523,10 +523,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: 1
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 9ad269c99dcf42b7aedefd83dd5a7b9d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -605,7 +605,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6729220862447800074}
   - component: {fileID: 2050832626950785452}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Pin2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -689,7 +689,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6142159130250840536}
   - component: {fileID: 4514952968650378417}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: OneShotAudioSource
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -817,7 +817,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3967915251811823751}
   - component: {fileID: 419995660838565235}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Pin1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -902,7 +902,7 @@ GameObject:
   - component: {fileID: 7563287351372739398}
   - component: {fileID: 8403392775305910225}
   - component: {fileID: 114126698642364509}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Capacitor
   m_TagString: Capacitor
   m_Icon: {fileID: 0}
@@ -963,7 +963,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1355566687537813172}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: C_List
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -11,22 +11,22 @@ public class CompactVerticalAutoSnap : MonoBehaviour
 
     [Header("Vertical Layout Settings")]
     public float verticalSpacing = 2.0f;
-    public bool keepMinNumberStationary = true;
 
-    [Header("Group Settings")]
+    [Header("SubGroup Settings")]
     public int maxComponentsPerSubGroup = 5;
-    public float groupSpacing = 5.0f;
     public float subGroupSpacing = 3.0f;
 
-    [Header("Distance-Based Grouping")]
-    public float groupingDistance = 15.0f;
-    public bool useDistanceBasedGrouping = true;
+    [Header("Group Spacing Settings")]
+    public float groupSpacing = 15.0f;
 
-    [Header("Container Settings")]
-    public float containerSpacing = 20.0f;
+    [Header("Animation Settings")]
+    [Tooltip("Длительность анимации для одного компонента")]
+    public float componentMoveDuration = 0.5f;
 
-    [Header("Animation")]
-    public float moveDuration = 0.3f;
+    [Tooltip("Задержка между началом анимации компонентов")]
+    public float delayBetweenComponents = 0.2f;
+
+    [Tooltip("Кривая анимации перемещения")]
     public AnimationCurve moveCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
     [Header("Debug Visualization")]
@@ -35,62 +35,151 @@ public class CompactVerticalAutoSnap : MonoBehaviour
     public Color debugGroupingColor = Color.blue;
 
     private bool isProcessing = false;
-    private SnapGridSystem gridSystem;
     private List<ComponentGroup> componentGroups = new List<ComponentGroup>();
-    private static int groupsCreatedCount = 0;
-    private float referenceYPosition;
-    private GameObject mainContainer;
+
+    private Dictionary<string, Transform> classMarkers = new Dictionary<string, Transform>();
+    private Dictionary<string, Transform> classContainers = new Dictionary<string, Transform>();
+    private Dictionary<string, List<GameObject>> groupContainersByType = new Dictionary<string, List<GameObject>>();
+    private GameObject markersContainer;
+    private GameObject autoSnapContainersRoot;
+
+    private int groupCounter = 0;
+    private List<Coroutine> activeAnimationCoroutines = new List<Coroutine>();
 
     void Start()
     {
-        gridSystem = FindObjectOfType<SnapGridSystem>();
-
-        // Находим главный контейнер или создаем его
-        mainContainer = GameObject.Find("ComponentGroups");
-        if (mainContainer == null)
-        {
-            mainContainer = new GameObject("ComponentGroups");
-        }
-
-        // Считаем количество уже существующих дочерних контейнеров
-        groupsCreatedCount = mainContainer.transform.Cast<Transform>()
-            .Count(child => child.name.StartsWith("ComponentGroups_"));
+        InitializeClassMarkers();
+        CreateClassContainers();
+        InitializeGroupContainers();
     }
 
     void Update()
     {
         if (Input.GetKeyDown(hotkey) && !isProcessing)
         {
+            StopAllActiveAnimations();
             StartCoroutine(ArrangeComponentsVertically());
         }
+    }
+
+    private void InitializeClassMarkers()
+    {
+        classMarkers.Clear();
+
+        markersContainer = GameObject.Find("ClassMarkers");
+        if (markersContainer == null)
+        {
+            Debug.LogWarning("ClassMarkers container not found!");
+            return;
+        }
+
+        foreach (Transform marker in markersContainer.transform)
+        {
+            if (marker.name.StartsWith("ClassMarker_"))
+            {
+                string className = marker.name.Replace("ClassMarker_", "");
+                classMarkers[className] = marker;
+
+                if (debugGrouping)
+                {
+                    Debug.Log($"Found class marker: {className} at position {marker.position}");
+                }
+            }
+        }
+    }
+
+    private void CreateClassContainers()
+    {
+        classContainers.Clear();
+
+        autoSnapContainersRoot = GameObject.Find("AutoSnapContainers");
+        if (autoSnapContainersRoot == null)
+        {
+            autoSnapContainersRoot = new GameObject("AutoSnapContainers");
+        }
+
+        string[] knownClasses = { "R", "C", "L", "D", "U", "G", "Q", "J", "K", "S", "Z", "O", "X", "A", "P" };
+
+        foreach (string className in knownClasses)
+        {
+            if (classMarkers.ContainsKey(className))
+            {
+                Transform markerTransform = classMarkers[className];
+
+                Transform existingContainer = autoSnapContainersRoot.transform.Find($"AutoSnapClass_{className}");
+                if (existingContainer != null)
+                {
+                    classContainers[className] = existingContainer;
+                }
+                else
+                {
+                    GameObject classContainer = new GameObject($"AutoSnapClass_{className}");
+                    classContainer.transform.SetParent(autoSnapContainersRoot.transform);
+                    classContainer.transform.position = markerTransform.position;
+
+                    classContainers[className] = classContainer.transform;
+                }
+            }
+        }
+    }
+
+    private void InitializeGroupContainers()
+    {
+        groupContainersByType.Clear();
+
+        foreach (var className in classContainers.Keys)
+        {
+            groupContainersByType[className] = new List<GameObject>();
+
+            Transform classContainer = classContainers[className];
+            foreach (Transform child in classContainer)
+            {
+                if (child.name.StartsWith($"{className}_Subgroups_"))
+                {
+                    groupContainersByType[className].Add(child.gameObject);
+                }
+            }
+
+            groupContainersByType[className].Sort((a, b) => {
+                int aNum = ExtractGroupNumber(a.name);
+                int bNum = ExtractGroupNumber(b.name);
+                return aNum.CompareTo(bNum);
+            });
+        }
+    }
+
+    private int ExtractGroupNumber(string groupName)
+    {
+        string[] parts = groupName.Split('_');
+        if (parts.Length >= 3 && int.TryParse(parts[2], out int number))
+        {
+            return number;
+        }
+        return 0;
     }
 
     private IEnumerator ArrangeComponentsVertically()
     {
         isProcessing = true;
-        Debug.Log("Starting compact vertical arrangement...");
+        Debug.Log("Starting compact vertical arrangement with sequential animation...");
 
-        componentGroups.Clear();
-        ClearOnlyEmptyGroups();
+        groupCounter++;
 
         Physics2D.SyncTransforms();
         yield return new WaitForFixedUpdate();
 
         CircuitComponent[] allComponents = FindObjectsOfType<CircuitComponent>();
 
-        // Исключаем компоненты, которые уже находятся в существующих группах
         HashSet<CircuitComponent> alreadyGroupedComponents = FindAlreadyGroupedComponents();
 
-        // Удаляем дубликаты - оставляем только компоненты с уникальными номерами
         List<CircuitComponent> activeComponents = allComponents
             .Where(comp => comp != null && comp.gameObject.activeInHierarchy && !alreadyGroupedComponents.Contains(comp))
             .GroupBy(comp => $"{comp.componentType}{comp.componentNumber}")
             .Select(group => group.First())
             .ToList();
 
-        Debug.Log($"Found {activeComponents.Count} unique active components");
+        Debug.Log($"Found {activeComponents.Count} unique active components for group {groupCounter}");
 
-        // Если нет новых компонентов для группировки, выходим
         if (activeComponents.Count == 0)
         {
             Debug.Log("No new components to arrange");
@@ -98,362 +187,117 @@ public class CompactVerticalAutoSnap : MonoBehaviour
             yield break;
         }
 
-        // Сортируем компоненты по их номерам
-        activeComponents.Sort((a, b) => a.componentNumber.CompareTo(b.componentNumber));
+        var componentsByType = activeComponents
+            .GroupBy(comp => comp.componentType)
+            .ToDictionary(group => group.Key, group => group.ToList());
 
-        // Используем дистанционную группировку
-        List<List<CircuitComponent>> distanceGroups = GroupComponentsByDistance(activeComponents);
-        distanceGroups.RemoveAll(group => group.Count == 0);
+        List<Coroutine> animationCoroutines = new List<Coroutine>();
 
-        if (distanceGroups.Count == 0)
+        foreach (var typeGroup in componentsByType)
         {
-            Debug.Log("No distance-based groups found");
-            isProcessing = false;
-            yield break;
-        }
+            string componentType = typeGroup.Key;
+            List<CircuitComponent> components = typeGroup.Value;
 
-        // Сортируем группы по минимальному номеру компонента
-        distanceGroups.Sort((a, b) =>
-            a.Min(c => c.componentNumber).CompareTo(b.Min(c => c.componentNumber)));
-
-        // Создаем новый дочерний контейнер
-        groupsCreatedCount++;
-        string containerName = $"ComponentGroups_{groupsCreatedCount}";
-        GameObject groupsContainer = new GameObject(containerName);
-        groupsContainer.transform.SetParent(mainContainer.transform);
-        groupsContainer.transform.localPosition = Vector3.zero;
-
-        // Находим самую правую позицию существующих контейнеров
-        float rightmostX = FindRightmostContainerPosition();
-        float currentXPosition = rightmostX + containerSpacing;
-
-        // Находим высоту самого высокого компонента для выравнивания
-        float maxComponentHeight = FindMaxComponentHeight(activeComponents);
-
-        for (int groupIndex = 0; groupIndex < distanceGroups.Count; groupIndex++)
-        {
-            var group = distanceGroups[groupIndex];
-            group.Sort((a, b) => a.componentNumber.CompareTo(b.componentNumber));
-
-            ComponentGroup componentGroup = new ComponentGroup();
-            componentGroup.groupIndex = groupIndex;
-            componentGroup.groupContainer = new GameObject($"Group_{groupIndex + 1}");
-            componentGroup.groupContainer.transform.SetParent(groupsContainer.transform);
-            componentGroup.groupContainer.transform.position = new Vector3(currentXPosition, 0, 0);
-
-            List<List<CircuitComponent>> subGroups = SplitIntoSubGroups(group, maxComponentsPerSubGroup);
-
-            float totalGroupWidth = 0f;
-
-            for (int subGroupIndex = 0; subGroupIndex < subGroups.Count; subGroupIndex++)
+            if (!classContainers.ContainsKey(componentType))
             {
-                var subGroup = subGroups[subGroupIndex];
-                subGroup.Sort((a, b) => a.componentNumber.CompareTo(b.componentNumber));
-
-                ComponentSubGroup subGroupObj = new ComponentSubGroup();
-                subGroupObj.subGroupIndex = subGroupIndex;
-                subGroupObj.subGroupContainer = new GameObject($"Sub-group_{subGroupIndex + 1}");
-                subGroupObj.subGroupContainer.transform.SetParent(componentGroup.groupContainer.transform);
-
-                // Создаем имя для подгруппы
-                string subGroupName = CreateSubGroupName(subGroup, subGroupIndex);
-                subGroupObj.subGroupContainer.name = subGroupName;
-
-                // Добавляем компоненты в подгруппу
-                AddComponentsToSubGroup(subGroup, subGroupObj);
-
-                componentGroup.subGroups.Add(subGroupObj);
-
-                // Позиционируем подгруппу горизонтально
-                subGroupObj.subGroupContainer.transform.localPosition = new Vector3(totalGroupWidth, 0, 0);
-
-                // Расставляем компоненты в подгруппе вертикально с выравниванием по первому элементу
-                if (subGroupIndex == 0)
-                {
-                    // Для первой подгруппы вычисляем референсную позицию
-                    yield return StartCoroutine(ArrangeFirstSubGroup(subGroup, subGroupObj.subGroupContainer.transform, maxComponentHeight));
-                }
-                else
-                {
-                    // Для последующих подгрупп используем референсную позицию первой подгруппы
-                    yield return StartCoroutine(ArrangeSubGroupWithReference(subGroup, subGroupObj.subGroupContainer.transform));
-                }
-
-                // Вычисляем размеры подгруппы
-                Bounds subGroupBounds = CalculateSubGroupBounds(subGroup);
-                totalGroupWidth += subGroupBounds.size.x + subGroupSpacing;
-
-                if (debugGrouping)
-                {
-                    Debug.Log($"Sub-group {subGroupIndex + 1} in Group {groupIndex + 1} has {subGroup.Count} components");
-                }
+                Debug.LogWarning($"No class container found for component type: {componentType}");
+                continue;
             }
 
-            componentGroups.Add(componentGroup);
-
-            // Увеличиваем позицию для следующей группы
-            currentXPosition += totalGroupWidth + groupSpacing;
-
-            if (groupIndex < distanceGroups.Count - 1)
-            {
-                yield return new WaitForSeconds(0.1f);
-            }
+            animationCoroutines.Add(StartCoroutine(ArrangeComponentsForType(componentType, components, groupCounter)));
         }
 
-        yield return StartCoroutine(CleanEmptyGroups(groupsContainer));
+        foreach (var coroutine in animationCoroutines)
+        {
+            yield return coroutine;
+        }
+
+        InitializeGroupContainers();
+
         LogGroupInformation();
-
-        Debug.Log("Compact vertical arrangement completed");
+        Debug.Log($"Compact vertical arrangement with sequential animation completed for group {groupCounter}");
         isProcessing = false;
     }
 
-    // Метод группировки компонентов по расстоянию
-    private List<List<CircuitComponent>> GroupComponentsByDistance(List<CircuitComponent> components)
+    private IEnumerator ArrangeComponentsForType(string componentType, List<CircuitComponent> components, int currentGroupNumber)
     {
-        List<List<CircuitComponent>> groups = new List<List<CircuitComponent>>();
-        List<CircuitComponent> ungroupedComponents = new List<CircuitComponent>(components);
+        Debug.Log($"Arranging {components.Count} components of type {componentType} for group {currentGroupNumber} with sequential animation");
 
-        while (ungroupedComponents.Count > 0)
+        Transform classContainer = classContainers[componentType];
+        Transform classMarker = classMarkers[componentType];
+
+        Transform childMarker = classMarker.Find("ChildMarker");
+        if (childMarker == null)
         {
-            CircuitComponent currentComponent = ungroupedComponents[0];
-            ungroupedComponents.RemoveAt(0);
-
-            List<CircuitComponent> currentGroup = new List<CircuitComponent> { currentComponent };
-
-            // Ищем все компоненты, которые находятся рядом с текущим компонентом
-            FindNearbyComponentsByDistance(currentComponent, currentGroup, ungroupedComponents);
-
-            if (currentGroup.Count > 0)
-            {
-                groups.Add(currentGroup);
-
-                if (debugGrouping)
-                {
-                    StringBuilder groupInfo = new StringBuilder();
-                    groupInfo.Append($"Group {groups.Count}: [");
-                    foreach (var comp in currentGroup)
-                    {
-                        groupInfo.Append($"{comp.componentType}{comp.componentNumber},");
-                    }
-                    groupInfo.Append("]");
-                    Debug.Log(groupInfo.ToString());
-                }
-            }
+            Debug.LogWarning($"ChildMarker not found for class {componentType}");
+            yield break;
         }
-
-        return groups;
-    }
-
-    private void FindNearbyComponentsByDistance(CircuitComponent component, List<CircuitComponent> group,
-                                               List<CircuitComponent> ungroupedComponents)
-    {
-        // Создаем временный список для безопасного удаления элементов
-        List<CircuitComponent> componentsToRemove = new List<CircuitComponent>();
-
-        foreach (CircuitComponent otherComponent in ungroupedComponents)
-        {
-            if (otherComponent != null && otherComponent != component)
-            {
-                float distance = Vector3.Distance(component.transform.position, otherComponent.transform.position);
-
-                if (distance <= groupingDistance)
-                {
-                    if (debugGrouping)
-                    {
-                        Debug.Log($"Component {component.componentType}{component.componentNumber} is near {otherComponent.componentType}{otherComponent.componentNumber} (distance: {distance})");
-                        Debug.DrawLine(component.transform.position, otherComponent.transform.position, debugGroupingColor, 2f);
-                    }
-
-                    group.Add(otherComponent);
-                    componentsToRemove.Add(otherComponent);
-                }
-            }
-        }
-
-        // Удаляем сгруппированные компоненты из непомеченных
-        foreach (CircuitComponent comp in componentsToRemove)
-        {
-            ungroupedComponents.Remove(comp);
-        }
-
-        // Рекурсивно ищем компоненты рядом с каждым найденном компонентом
-        foreach (CircuitComponent comp in componentsToRemove)
-        {
-            FindNearbyComponentsByDistance(comp, group, ungroupedComponents);
-        }
-    }
-
-    private Bounds CalculateSubGroupBounds(List<CircuitComponent> components)
-    {
-        if (components.Count == 0) return new Bounds(Vector3.zero, Vector3.zero);
-
-        Bounds totalBounds = CalculateComponentBounds(components[0]);
-
-        for (int i = 1; i < components.Count; i++)
-        {
-            if (components[i] != null)
-            {
-                Bounds componentBounds = CalculateComponentBounds(components[i]);
-                totalBounds.Encapsulate(componentBounds);
-            }
-        }
-
-        return totalBounds;
-    }
-
-    private IEnumerator CleanEmptyGroups(GameObject groupsContainer)
-    {
-        if (groupsContainer == null) yield break;
-
-        List<GameObject> objectsToRemove = new List<GameObject>();
-
-        foreach (Transform groupTransform in groupsContainer.transform)
-        {
-            bool groupHasComponents = false;
-
-            foreach (Transform subGroupTransform in groupTransform)
-            {
-                bool subGroupHasComponents = false;
-
-                foreach (Transform child in subGroupTransform)
-                {
-                    if (child.GetComponent<CircuitComponent>() != null)
-                    {
-                        subGroupHasComponents = true;
-                        groupHasComponents = true;
-                        break;
-                    }
-                }
-
-                if (!subGroupHasComponents)
-                {
-                    objectsToRemove.Add(subGroupTransform.gameObject);
-                }
-            }
-
-            if (!groupHasComponents)
-            {
-                objectsToRemove.Add(groupTransform.gameObject);
-            }
-        }
-
-        foreach (GameObject obj in objectsToRemove)
-        {
-            if (obj != null)
-            {
-                DestroyImmediate(obj);
-            }
-        }
-
-        yield return null;
-    }
-
-    private List<List<CircuitComponent>> SplitIntoSubGroups(List<CircuitComponent> group, int maxSize)
-    {
-        List<List<CircuitComponent>> subGroups = new List<List<CircuitComponent>>();
-        group.Sort((a, b) => a.componentNumber.CompareTo(b.componentNumber));
-
-        for (int i = 0; i < group.Count; i += maxSize)
-        {
-            subGroups.Add(group.GetRange(i, Mathf.Min(maxSize, group.Count - i)));
-        }
-
-        return subGroups;
-    }
-
-    private IEnumerator ArrangeFirstSubGroup(List<CircuitComponent> components, Transform container, float maxComponentHeight)
-    {
-        if (components.Count == 0) yield break;
-
-        Debug.Log($"Arranging first subgroup with {components.Count} components");
 
         components.Sort((a, b) => a.componentNumber.CompareTo(b.componentNumber));
 
-        // Вычисляем общую высоту всех компонентов
-        float totalHeight = CalculateTotalHeight(components);
+        List<List<CircuitComponent>> subGroups = SplitIntoSubGroups(components, maxComponentsPerSubGroup);
 
-        // Вычисляем начальную позицию Y (самый верхний компонент)
-        referenceYPosition = container.position.y + (totalHeight / 2);
+        float groupXPosition = CalculateGroupXPosition(componentType, currentGroupNumber);
 
-        for (int i = 0; i < components.Count; i++)
+        GameObject subgroupsContainer = new GameObject($"{componentType}_Subgroups_{currentGroupNumber}");
+        subgroupsContainer.transform.SetParent(classContainer);
+        subgroupsContainer.transform.localPosition = new Vector3(groupXPosition, 0, 0);
+
+        if (!groupContainersByType.ContainsKey(componentType))
         {
-            CircuitComponent component = components[i];
-            if (component == null) continue;
+            groupContainersByType[componentType] = new List<GameObject>();
+        }
+        groupContainersByType[componentType].Add(subgroupsContainer);
 
-            // Вычисляем целевую позицию по Y
-            float targetY = referenceYPosition;
+        // Запускаем анимацию для каждой подгруппы последовательно
+        for (int i = 0; i < subGroups.Count; i++)
+        {
+            var subGroup = subGroups[i];
 
-            // Вычитаем высоту всех предыдущих компонентов
-            for (int j = 0; j < i; j++)
-            {
-                if (components[j] != null)
-                {
-                    Bounds bounds = CalculateComponentBounds(components[j]);
-                    targetY -= bounds.size.y + verticalSpacing;
-                }
-            }
+            GameObject subGroupContainer = new GameObject($"Sub-group_{i + 1}");
+            subGroupContainer.transform.SetParent(subgroupsContainer.transform);
 
-            // Привязываем к сетке
-            Vector2 targetPosition = new Vector2(container.position.x, targetY);
-            if (gridSystem != null)
-            {
-                targetPosition = gridSystem.GetNearestPoint(targetPosition);
-            }
+            float subGroupX = i * subGroupSpacing;
+            subGroupContainer.transform.localPosition = new Vector3(subGroupX, 0, 0);
 
-            // Перемещаем компонент
-            yield return StartCoroutine(MoveComponentSmoothly(component, targetPosition));
-
-            // Устанавливаем контейнер как родителя
-            component.transform.SetParent(container);
+            // Запускаем последовательную анимацию для компонентов в подгруппе
+            yield return StartCoroutine(ArrangeSubGroupSequentially(subGroup, subGroupContainer));
         }
     }
 
-    private IEnumerator ArrangeSubGroupWithReference(List<CircuitComponent> components, Transform container)
+    private IEnumerator ArrangeSubGroupSequentially(List<CircuitComponent> subGroup, GameObject subGroupContainer)
     {
-        if (components.Count == 0) yield break;
-
-        Debug.Log($"Arranging subgroup with reference Y position: {referenceYPosition}");
-
-        components.Sort((a, b) => a.componentNumber.CompareTo(b.componentNumber));
-
-        for (int i = 0; i < components.Count; i++)
+        for (int j = 0; j < subGroup.Count; j++)
         {
-            CircuitComponent component = components[i];
+            CircuitComponent component = subGroup[j];
             if (component == null) continue;
 
-            // Вычисляем целевую позицию по Y относительно референсной позиции
-            float targetY = referenceYPosition;
+            float componentHeight = CalculateComponentBounds(component).size.y;
+            float localY = -j * (componentHeight + verticalSpacing);
 
-            // Вычитаем высоту всех предыдущих компонентов
-            for (int j = 0; j < i; j++)
+            component.transform.SetParent(subGroupContainer.transform);
+
+            // Запускаем анимацию для одного компонента и ждем ее завершения
+            Coroutine animationCoroutine = StartCoroutine(AnimateComponentToPosition(component, new Vector3(0, localY, 0)));
+            activeAnimationCoroutines.Add(animationCoroutine);
+
+            // Ждем завершения анимации текущего компонента
+            yield return animationCoroutine;
+
+            // Добавляем задержку перед началом анимации следующего компонента
+            if (j < subGroup.Count - 1) // Не добавляем задержку после последнего компонента
             {
-                if (components[j] != null)
-                {
-                    Bounds bounds = CalculateComponentBounds(components[j]);
-                    targetY -= bounds.size.y + verticalSpacing;
-                }
+                yield return new WaitForSeconds(delayBetweenComponents);
             }
-
-            // Привязываем к сетке
-            Vector2 targetPosition = new Vector2(container.position.x, targetY);
-            if (gridSystem != null)
-            {
-                targetPosition = gridSystem.GetNearestPoint(targetPosition);
-            }
-
-            // Перемещаем компонент
-            yield return StartCoroutine(MoveComponentSmoothly(component, targetPosition));
-
-            // Устанавливаем контейнер как родителя
-            component.transform.SetParent(container);
         }
     }
 
-    private IEnumerator MoveComponentSmoothly(CircuitComponent component, Vector2 targetPosition)
+    private IEnumerator AnimateComponentToPosition(CircuitComponent component, Vector3 targetLocalPosition)
     {
         if (component == null) yield break;
 
-        Vector2 startPosition = component.transform.position;
+        Transform componentRoot = component.transform;
+        Vector3 startLocalPosition = componentRoot.localPosition;
         float elapsed = 0f;
 
         Rigidbody2D rb = component.GetComponentInChildren<Rigidbody2D>();
@@ -465,16 +309,24 @@ public class CompactVerticalAutoSnap : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        while (elapsed < moveDuration)
+        if (debugGrouping)
         {
-            float t = moveCurve.Evaluate(elapsed / moveDuration);
-            component.transform.position = Vector2.Lerp(startPosition, targetPosition, t);
+            Debug.Log($"Starting animation for {component.componentType}{component.componentNumber} from {startLocalPosition} to {targetLocalPosition}");
+        }
 
+        while (elapsed < componentMoveDuration)
+        {
             elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / componentMoveDuration);
+
+            float curveValue = moveCurve.Evaluate(t);
+
+            componentRoot.localPosition = Vector3.Lerp(startLocalPosition, targetLocalPosition, curveValue);
             yield return null;
         }
 
-        component.transform.position = targetPosition;
+        componentRoot.localPosition = targetLocalPosition;
+        ResetLocalPositionsUntilDraggableCircle(componentRoot);
 
         if (rb != null)
         {
@@ -482,22 +334,69 @@ public class CompactVerticalAutoSnap : MonoBehaviour
         }
 
         Physics2D.SyncTransforms();
+
+        if (debugGrouping)
+        {
+            Debug.Log($"Component {component.componentType}{component.componentNumber} animation completed");
+        }
     }
 
-    private float CalculateTotalHeight(List<CircuitComponent> components)
+    private float CalculateGroupXPosition(string componentType, int currentGroupNumber)
     {
-        float totalHeight = 0;
-
-        foreach (CircuitComponent component in components)
+        if (!groupContainersByType.ContainsKey(componentType) || groupContainersByType[componentType].Count == 0)
         {
-            if (component != null)
-            {
-                Bounds bounds = CalculateComponentBounds(component);
-                totalHeight += bounds.size.y + verticalSpacing;
-            }
+            return 0f;
         }
 
-        return totalHeight - verticalSpacing;
+        GameObject lastGroup = groupContainersByType[componentType][groupContainersByType[componentType].Count - 1];
+
+        float lastGroupX = lastGroup.transform.localPosition.x;
+
+        int lastGroupSubgroupCount = lastGroup.transform.childCount;
+        float lastGroupWidth = (lastGroupSubgroupCount - 1) * subGroupSpacing;
+
+        float newGroupX = lastGroupX + lastGroupWidth + groupSpacing;
+
+        Debug.Log($"Calculating group position for {componentType}_Subgroups_{currentGroupNumber}: " +
+                 $"LastGroupX={lastGroupX}, LastGroupWidth={lastGroupWidth}, NewGroupX={newGroupX}");
+
+        return newGroupX;
+    }
+
+    private void StopAllActiveAnimations()
+    {
+        foreach (var coroutine in activeAnimationCoroutines)
+        {
+            if (coroutine != null)
+                StopCoroutine(coroutine);
+        }
+        activeAnimationCoroutines.Clear();
+    }
+
+    private void ResetLocalPositionsUntilDraggableCircle(Transform parent)
+    {
+        foreach (Transform child in parent)
+        {
+            child.localPosition = Vector3.zero;
+
+            DraggableComponent draggable = child.GetComponent<DraggableComponent>();
+            if (draggable != null)
+            {
+                continue;
+            }
+            else
+            {
+                ResetImmediateChildrenOnly(child);
+            }
+        }
+    }
+
+    private void ResetImmediateChildrenOnly(Transform parent)
+    {
+        foreach (Transform child in parent)
+        {
+            child.localPosition = Vector3.zero;
+        }
     }
 
     private Bounds CalculateComponentBounds(CircuitComponent component)
@@ -505,7 +404,6 @@ public class CompactVerticalAutoSnap : MonoBehaviour
         if (component == null)
             return new Bounds(Vector3.zero, Vector3.zero);
 
-        // Кэшируем компоненты для более быстрого доступа
         DraggableComponent draggable = component.GetComponentInChildren<DraggableComponent>();
         if (draggable != null)
         {
@@ -516,7 +414,6 @@ public class CompactVerticalAutoSnap : MonoBehaviour
             if (collider != null) return collider.bounds;
         }
 
-        // Если не нашли, ищем любой рендерер или коллайдер в компоненте и его детях
         Renderer rendererInChildren = component.GetComponentInChildren<Renderer>();
         if (rendererInChildren != null)
         {
@@ -550,53 +447,13 @@ public class CompactVerticalAutoSnap : MonoBehaviour
         return new Bounds(component.transform.position, new Vector3(1f, 1f, 0f));
     }
 
-    private float FindMaxComponentHeight(List<CircuitComponent> components)
-    {
-        float maxHeight = 0f;
-
-        foreach (CircuitComponent component in components)
-        {
-            if (component != null)
-            {
-                Bounds bounds = CalculateComponentBounds(component);
-                if (bounds.size.y > maxHeight)
-                {
-                    maxHeight = bounds.size.y;
-                }
-            }
-        }
-
-        return maxHeight;
-    }
-
-    private void ClearOnlyEmptyGroups()
-    {
-        if (mainContainer == null) return;
-
-        List<GameObject> containersToRemove = new List<GameObject>();
-
-        foreach (Transform containerTransform in mainContainer.transform)
-        {
-            CircuitComponent[] components = containerTransform.GetComponentsInChildren<CircuitComponent>();
-            if (components.Length == 0)
-            {
-                containersToRemove.Add(containerTransform.gameObject);
-            }
-        }
-
-        foreach (GameObject container in containersToRemove)
-        {
-            DestroyImmediate(container);
-        }
-    }
-
     private HashSet<CircuitComponent> FindAlreadyGroupedComponents()
     {
         HashSet<CircuitComponent> groupedComponents = new HashSet<CircuitComponent>();
 
-        if (mainContainer == null) return groupedComponents;
+        if (autoSnapContainersRoot == null) return groupedComponents;
 
-        foreach (Transform containerTransform in mainContainer.transform)
+        foreach (Transform containerTransform in autoSnapContainersRoot.transform)
         {
             CircuitComponent[] componentsInContainer = containerTransform.GetComponentsInChildren<CircuitComponent>();
             foreach (CircuitComponent comp in componentsInContainer)
@@ -608,60 +465,17 @@ public class CompactVerticalAutoSnap : MonoBehaviour
         return groupedComponents;
     }
 
-    private float FindRightmostContainerPosition()
+    private List<List<CircuitComponent>> SplitIntoSubGroups(List<CircuitComponent> group, int maxSize)
     {
-        float rightmostX = 0f;
+        List<List<CircuitComponent>> subGroups = new List<List<CircuitComponent>>();
+        group.Sort((a, b) => a.componentNumber.CompareTo(b.componentNumber));
 
-        if (mainContainer == null) return rightmostX;
-
-        foreach (Transform containerTransform in mainContainer.transform)
+        for (int i = 0; i < group.Count; i += maxSize)
         {
-            // Находим самый правый компонент в контейнере
-            CircuitComponent[] components = containerTransform.GetComponentsInChildren<CircuitComponent>();
-            foreach (CircuitComponent comp in components)
-            {
-                if (comp != null)
-                {
-                    Bounds bounds = CalculateComponentBounds(comp);
-                    float componentRightEdge = comp.transform.position.x + bounds.extents.x;
-                    if (componentRightEdge > rightmostX)
-                    {
-                        rightmostX = componentRightEdge;
-                    }
-                }
-            }
+            subGroups.Add(group.GetRange(i, Mathf.Min(maxSize, group.Count - i)));
         }
 
-        return rightmostX;
-    }
-
-    private string CreateSubGroupName(List<CircuitComponent> subGroup, int subGroupIndex)
-    {
-        StringBuilder sb = new StringBuilder();
-        sb.Append($"Sub-group {subGroupIndex + 1} [");
-
-        List<string> componentIdentifiers = subGroup
-            .Where(comp => comp != null)
-            .Select(comp => $"{comp.componentType}{comp.componentNumber}")
-            .ToList();
-
-        sb.Append(string.Join(",", componentIdentifiers));
-        sb.Append("]");
-
-        return sb.ToString();
-    }
-
-    private void AddComponentsToSubGroup(List<CircuitComponent> subGroup, ComponentSubGroup subGroupObj)
-    {
-        foreach (CircuitComponent comp in subGroup)
-        {
-            if (comp != null)
-            {
-                string componentId = $"{comp.componentType}{comp.componentNumber}";
-                subGroupObj.components.Add(comp);
-                subGroupObj.componentIds.Add(componentId);
-            }
-        }
+        return subGroups;
     }
 
     private void LogGroupInformation()
@@ -669,30 +483,26 @@ public class CompactVerticalAutoSnap : MonoBehaviour
         StringBuilder log = new StringBuilder();
         log.AppendLine("=== COMPONENT GROUP INFORMATION ===");
 
-        List<ComponentGroup> validGroups = componentGroups
-            .Where(group => group.groupContainer != null)
-            .ToList();
-
-        foreach (ComponentGroup group in validGroups)
+        foreach (var typeGroup in groupContainersByType)
         {
-            log.AppendLine($"Group {group.groupIndex + 1}:");
+            string componentType = typeGroup.Key;
+            List<GameObject> groups = typeGroup.Value;
 
-            foreach (ComponentSubGroup subGroup in group.subGroups)
+            log.AppendLine($"Component Type: {componentType}");
+            log.AppendLine($"Number of Groups: {groups.Count}");
+
+            foreach (GameObject group in groups)
             {
-                if (subGroup.subGroupContainer == null) continue;
+                log.AppendLine($"  Group: {group.name} at X={group.transform.localPosition.x}");
 
-                log.AppendLine($"  {subGroup.subGroupContainer.name}");
-
-                foreach (string componentId in subGroup.componentIds)
+                foreach (Transform subGroup in group.transform)
                 {
-                    log.AppendLine($"    - {componentId}");
+                    log.AppendLine($"    SubGroup: {subGroup.name} at X={subGroup.transform.localPosition.x}");
+                    log.AppendLine($"      Components: {subGroup.childCount}");
                 }
             }
-
             log.AppendLine();
         }
-
-        componentGroups = validGroups;
 
         Debug.Log(log.ToString());
     }
@@ -701,6 +511,7 @@ public class CompactVerticalAutoSnap : MonoBehaviour
     {
         if (!isProcessing)
         {
+            StopAllActiveAnimations();
             StartCoroutine(ArrangeComponentsVertically());
         }
     }
@@ -709,13 +520,20 @@ public class CompactVerticalAutoSnap : MonoBehaviour
     {
         if (!debugGrouping) return;
 
-        CircuitComponent[] allComponents = FindObjectsOfType<CircuitComponent>();
-        foreach (CircuitComponent component in allComponents)
+        foreach (var marker in classMarkers)
         {
-            if (component != null && component.gameObject.activeInHierarchy)
+            if (marker.Value != null)
             {
-                Gizmos.color = debugGroupingColor;
-                Gizmos.DrawWireSphere(component.transform.position, groupingDistance);
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireSphere(marker.Value.position, 1f);
+
+                Transform childMarker = marker.Value.Find("ChildMarker");
+                if (childMarker != null)
+                {
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawWireSphere(childMarker.position, 0.5f);
+                    Gizmos.DrawLine(marker.Value.position, childMarker.position);
+                }
             }
         }
     }

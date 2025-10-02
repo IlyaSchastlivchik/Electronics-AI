@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4305648295146407889}
   - component: {fileID: 7886063628030924573}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Resistor_12 1 (SpriteRen Collider)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -73,9 +73,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
+  m_SortingLayerID: 611509485
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 6
   m_Sprite: {fileID: 21300000, guid: dacfffcd2f003c94fb5ff8b50849a0a7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -98,7 +98,7 @@ GameObject:
   - component: {fileID: 8461985384819587512}
   - component: {fileID: 9180045837911335465}
   - component: {fileID: 3930524531088650408}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Label (TextMeshPro)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -144,7 +144,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  - {fileID: 2100000, guid: 9ad269c99dcf42b7aedefd83dd5a7b9d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -189,7 +189,7 @@ MonoBehaviour:
   m_text: 1
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 9ad269c99dcf42b7aedefd83dd5a7b9d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -273,7 +273,7 @@ GameObject:
   - component: {fileID: 6606927733548932515}
   - component: {fileID: 2766138103118958561}
   - component: {fileID: 569298131890978084}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: DraggableCircle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -334,9 +334,9 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
+  m_SortingLayerID: 611509485
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 6
   m_Sprite: {fileID: -2413806693520163455, guid: 1b6ddcd9c421aa649aff51597033a3bf, type: 3}
   m_Color: {r: 0.23529413, g: 0.23529413, b: 0.23529413, a: 1}
   m_FlipX: 0
@@ -476,7 +476,7 @@ GameObject:
   - component: {fileID: 1820090700190388726}
   - component: {fileID: 6288161066673074776}
   - component: {fileID: 7664294740873636985}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Resistor
   m_TagString: Resistor
   m_Icon: {fileID: 0}
@@ -538,7 +538,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7822519373217351743}
   - component: {fileID: 7491592571513595057}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Pin2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -622,7 +622,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7284418930698131052}
   - component: {fileID: 4363684503295358813}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Pin1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -705,7 +705,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 505343402708328327}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: R_List
   m_TagString: Untagged
   m_Icon: {fileID: 0}
