@@ -29,6 +29,13 @@ public class CompactVerticalAutoSnap : MonoBehaviour
     [Tooltip("Кривая анимации перемещения")]
     public AnimationCurve moveCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
+    [Header("Camera System Integration")]
+    public CameraManager cameraManager;
+
+    [Header("Container Monitoring")]
+    public float containerCheckInterval = 0.5f;
+    public bool autoMonitorContainers = true;
+
     [Header("Debug Visualization")]
     public bool showGroupLabels = true;
     public bool debugGrouping = true;
@@ -45,12 +52,20 @@ public class CompactVerticalAutoSnap : MonoBehaviour
 
     private int groupCounter = 0;
     private List<Coroutine> activeAnimationCoroutines = new List<Coroutine>();
+    private Coroutine containerMonitorCoroutine;
+    private HashSet<string> activeClasses = new HashSet<string>();
 
     void Start()
     {
+        InitializeCameraManager();
         InitializeClassMarkers();
         CreateClassContainers();
         InitializeGroupContainers();
+
+        if (autoMonitorContainers)
+        {
+            StartContainerMonitoring();
+        }
     }
 
     void Update()
@@ -61,6 +76,130 @@ public class CompactVerticalAutoSnap : MonoBehaviour
             StartCoroutine(ArrangeComponentsVertically());
         }
     }
+
+    private void InitializeCameraManager()
+    {
+        if (cameraManager == null)
+        {
+            cameraManager = FindObjectOfType<CameraManager>();
+            if (cameraManager == null)
+            {
+                Debug.LogWarning("CameraManager не найден в сцене!");
+            }
+            else
+            {
+                Debug.Log("CameraManager автоматически найден и присвоен.");
+            }
+        }
+    }
+
+    private void StartContainerMonitoring()
+    {
+        if (containerMonitorCoroutine != null)
+        {
+            StopCoroutine(containerMonitorCoroutine);
+        }
+        containerMonitorCoroutine = StartCoroutine(MonitorContainers());
+    }
+
+    private IEnumerator MonitorContainers()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(containerCheckInterval);
+            CheckAllContainersForSubgroups();
+        }
+    }
+
+    private void CheckAllContainersForSubgroups()
+    {
+        if (autoSnapContainersRoot == null) return;
+
+        HashSet<string> currentActiveClasses = new HashSet<string>();
+
+        foreach (Transform classContainer in autoSnapContainersRoot.transform)
+        {
+            string containerName = classContainer.name;
+            if (containerName.StartsWith("AutoSnapClass_"))
+            {
+                string className = containerName.Replace("AutoSnapClass_", "");
+
+                // Проверяем есть ли подгруппы в этом контейнере
+                bool hasSubgroups = CheckForSubgroups(classContainer, className);
+
+                if (hasSubgroups)
+                {
+                    currentActiveClasses.Add(className);
+
+                    // Если этот класс ранее не был активен - активируем камеру
+                    if (!activeClasses.Contains(className))
+                    {
+                        ActivateClassCamera(className);
+                    }
+                }
+            }
+        }
+
+        // Деактивируем камеры для классов, которые больше не активны
+        foreach (string previouslyActiveClass in activeClasses)
+        {
+            if (!currentActiveClasses.Contains(previouslyActiveClass))
+            {
+                DeactivateClassCamera(previouslyActiveClass);
+            }
+        }
+
+        activeClasses = currentActiveClasses;
+    }
+
+    private bool CheckForSubgroups(Transform classContainer, string className)
+    {
+        foreach (Transform child in classContainer)
+        {
+            if (child.name.StartsWith($"{className}_Subgroups_"))
+            {
+                // Проверяем есть ли дочерние объекты в подгруппе
+                if (child.childCount > 0)
+                {
+                    return true;
+                }
+
+                // Или проверяем есть ли компоненты в подгруппах
+                foreach (Transform subGroup in child)
+                {
+                    if (subGroup.childCount > 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private void ActivateClassCamera(string className)
+    {
+        if (cameraManager != null)
+        {
+            cameraManager.ActivateCameraForClass(className);
+            Debug.Log($"Активирована камера для класса {className} (обнаружены подгруппы)");
+        }
+        else
+        {
+            Debug.LogWarning($"CameraManager не доступен для активации камеры класса {className}");
+        }
+    }
+
+    private void DeactivateClassCamera(string className)
+    {
+        if (cameraManager != null)
+        {
+            cameraManager.DeactivateCameraForClass(className);
+            Debug.Log($"Деактивирована камера для класса {className} (подгруппы отсутствуют)");
+        }
+    }
+
+    // Остальные методы остаются без изменений до метода ArrangeComponentsForType
 
     private void InitializeClassMarkers()
     {
@@ -214,6 +353,9 @@ public class CompactVerticalAutoSnap : MonoBehaviour
 
         InitializeGroupContainers();
 
+        // Принудительно проверяем контейнеры после завершения анимации
+        CheckAllContainersForSubgroups();
+
         LogGroupInformation();
         Debug.Log($"Compact vertical arrangement with sequential animation completed for group {groupCounter}");
         isProcessing = false;
@@ -249,6 +391,9 @@ public class CompactVerticalAutoSnap : MonoBehaviour
         }
         groupContainersByType[componentType].Add(subgroupsContainer);
 
+        // НЕМЕДЛЕННО активируем камеру при создании контейнера подгрупп
+        ActivateClassCamera(componentType);
+
         // Запускаем анимацию для каждой подгруппы последовательно
         for (int i = 0; i < subGroups.Count; i++)
         {
@@ -263,7 +408,11 @@ public class CompactVerticalAutoSnap : MonoBehaviour
             // Запускаем последовательную анимацию для компонентов в подгруппе
             yield return StartCoroutine(ArrangeSubGroupSequentially(subGroup, subGroupContainer));
         }
+
+        Debug.Log($"Completed arranging components for type {componentType}");
     }
+
+    // Остальные методы остаются без изменений...
 
     private IEnumerator ArrangeSubGroupSequentially(List<CircuitComponent> subGroup, GameObject subGroupContainer)
     {
@@ -285,7 +434,7 @@ public class CompactVerticalAutoSnap : MonoBehaviour
             yield return animationCoroutine;
 
             // Добавляем задержку перед началом анимации следующего компонента
-            if (j < subGroup.Count - 1) // Не добавляем задержку после последнего компонента
+            if (j < subGroup.Count - 1)
             {
                 yield return new WaitForSeconds(delayBetweenComponents);
             }
@@ -535,6 +684,14 @@ public class CompactVerticalAutoSnap : MonoBehaviour
                     Gizmos.DrawLine(marker.Value.position, childMarker.position);
                 }
             }
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (containerMonitorCoroutine != null)
+        {
+            StopCoroutine(containerMonitorCoroutine);
         }
     }
 }
