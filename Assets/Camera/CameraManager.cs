@@ -4,13 +4,11 @@ using UnityEngine;
 public class CameraManager : MonoBehaviour
 {
     [Header("Canvas Reference")]
-    public Canvas targetCanvas; // Перетащите сюда ваш основной Canvas
+    public Canvas targetCanvas;
 
     [Header("Hotkey Settings")]
     public bool enableHotkeys = true;
-
-    [Header("Global Control Settings")]
-    public KeyCode globalDisableKey = KeyCode.F12; // Глобальная клавиша отключения всех камер
+    public KeyCode globalDisableKey = KeyCode.F12;
 
     private Dictionary<string, ClassCameraController> cameraDictionary = new Dictionary<string, ClassCameraController>();
     private Dictionary<int, ClassCameraController> hotkeyDictionary = new Dictionary<int, ClassCameraController>();
@@ -23,15 +21,11 @@ public class CameraManager : MonoBehaviour
 
     void Update()
     {
-        // Глобальная обработка горячих клавиш для быстрого отключения всех камер
         if (enableHotkeys && Input.GetKey(KeyCode.F) && Input.GetKeyDown(KeyCode.Escape))
             DeactivateAllCameras();
 
-        // Глобальное отключение/включение всех камер и дисплеев
         if (Input.GetKeyDown(globalDisableKey))
-        {
             ToggleAllCameras();
-        }
     }
 
     private void InitializeAllCameras()
@@ -45,7 +39,6 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        // Находим все контроллеры камер в сцене
         ClassCameraController[] cameraControllers = FindObjectsOfType<ClassCameraController>();
 
         foreach (var controller in cameraControllers)
@@ -55,56 +48,82 @@ public class CameraManager : MonoBehaviour
 
             if (!string.IsNullOrEmpty(className))
             {
-                // Регистрируем по классу компонента
                 if (!cameraDictionary.ContainsKey(className))
                     cameraDictionary.Add(className, controller);
-                else
-                    Debug.LogWarning($"Дублирующаяся камера для класса {className}!");
 
-                // Регистрируем по горячей клавише
                 if (hotkeyNum >= 1 && hotkeyNum <= 15)
                 {
                     if (!hotkeyDictionary.ContainsKey(hotkeyNum))
                         hotkeyDictionary.Add(hotkeyNum, controller);
-                    else
-                        Debug.LogWarning($"Дублирование горячей клавиши F+{hotkeyNum}!");
                 }
             }
         }
 
         Debug.Log($"Всего зарегистрировано камер: {cameraDictionary.Count}");
-        DeactivateAllCameras(); // Деактивируем все камеры при старте
+        DeactivateAllCameras();
     }
 
     public void ActivateCameraForClass(string className)
     {
         if (allCamerasDisabled)
         {
-            Debug.Log("Все камеры временно отключены глобально. Используйте " + globalDisableKey + " для включения.");
+            Debug.Log("Все камеры временно отключены глобально");
             return;
         }
 
         if (cameraDictionary.ContainsKey(className))
         {
-            // Деактивируем все камеры перед активацией нужной (режим эксклюзивности)
+            // Деактивируем все камеры перед активацией нужной
             DeactivateAllCameras();
             cameraDictionary[className].ActivateCamera();
+            Debug.Log($"Активирована камера для класса {className}");
         }
         else
+        {
             Debug.LogWarning($"Камера для класса {className} не найдена!");
+        }
+    }
+
+    /// <summary>
+    /// Активирует камеру без деактивации других камер
+    /// </summary>
+    public void ActivateCameraForClassWithoutDeactivation(string className)
+    {
+        if (allCamerasDisabled)
+        {
+            Debug.Log("Все камеры временно отключены глобально");
+            return;
+        }
+
+        if (cameraDictionary.ContainsKey(className))
+        {
+            // НЕ деактивируем другие камеры
+            cameraDictionary[className].ActivateCamera();
+            Debug.Log($"Активирована камера для класса {className} (без деактивации других)");
+        }
+        else
+        {
+            Debug.LogWarning($"Камера для класса {className} не найдена!");
+        }
     }
 
     public void DeactivateCameraForClass(string className)
     {
         if (cameraDictionary.ContainsKey(className))
+        {
             cameraDictionary[className].DeactivateCamera();
+            Debug.Log($"Деактивирована камера для класса {className}");
+        }
     }
 
     public void DeactivateAllCameras()
     {
         foreach (var controller in cameraDictionary.Values)
+        {
             if (controller != null)
                 controller.DeactivateCamera();
+        }
+        Debug.Log("Все камеры деактивированы");
     }
 
     public void ToggleAllCameras()
@@ -118,24 +137,20 @@ public class CameraManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("Глобальное отключение камер снято. Камеры можно активировать индивидуально.");
+            Debug.Log("Глобальное отключение камер снято");
         }
     }
 
-    // Метод для принудительного освобождения всех ресурсов
     public void ReleaseAllResources()
     {
         foreach (var controller in cameraDictionary.Values)
         {
             if (controller != null)
-            {
                 controller.ReleaseResources();
-            }
         }
         Debug.Log("Все ресурсы камер освобождены");
     }
 
-    // Метод для вызова из CompactVerticalAutoSnap
     public void NotifyComponentsAdded(string className, int componentCount)
     {
         if (componentCount > 0 && cameraDictionary.ContainsKey(className))
@@ -144,7 +159,6 @@ public class CameraManager : MonoBehaviour
             Debug.LogWarning($"Камера для класса {className} не найдена!");
     }
 
-    // Метод для получения статуса всех камер
     public void LogCameraStatus()
     {
         Debug.Log("=== СТАТУС КАМЕР ===");

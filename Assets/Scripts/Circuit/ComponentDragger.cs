@@ -4,11 +4,17 @@ public class ComponentDragger : MonoBehaviour
 {
     private bool _isDragging = true;
     private string _componentPrefix;
+    private ComponentSubclass _componentSubclass;
 
-    public void Initialize(string prefix)
+    public void Initialize(string prefix, ComponentSubclass subclass)
     {
         _componentPrefix = prefix;
+        _componentSubclass = subclass;
+
+        // Генерируем ID используя префикс класса
         name = ComponentManager.Instance.GenerateComponentID(_componentPrefix);
+
+        Debug.Log($"ComponentDragger initialized with prefix: '{_componentPrefix}', name: {name}");
     }
 
     void Update()
@@ -32,33 +38,39 @@ public class ComponentDragger : MonoBehaviour
 
     void FinalizeComponent()
     {
+        Debug.Log($"Finalizing component with prefix: '{_componentPrefix}', looking for container: {_componentPrefix}_List");
+
+        // Получаем контейнер используя префикс класса
         Transform container = ComponentManager.Instance.GetListContainer(_componentPrefix);
-        if (container != null) transform.SetParent(container);
+        if (container != null)
+        {
+            transform.SetParent(container);
+            Debug.Log($"Successfully parented to container: {container.name}");
+        }
+        else
+        {
+            Debug.LogError($"Failed to find container for prefix: {_componentPrefix}");
+        }
 
         CreatePins();
 
         // Добавляем компонент CircuitComponent
         CircuitComponent circuitComponent = gameObject.AddComponent<CircuitComponent>();
 
-        // Устанавливаем данные компонента на основе имени
-        string componentName = name;
-        int firstDigitIndex = -1;
-        for (int i = 0; i < componentName.Length; i++)
+        // Устанавливаем данные компонента
+        if (_componentSubclass != null)
         {
-            if (char.IsDigit(componentName[i]))
-            {
-                firstDigitIndex = i;
-                break;
-            }
-        }
+            string componentName = name;
+            string type = _componentPrefix; // Используем префикс класса как тип
+            string numberPart = componentName.Substring(_componentPrefix.Length);
 
-        if (firstDigitIndex > 0)
-        {
-            string type = componentName.Substring(0, firstDigitIndex);
-            string numberPart = componentName.Substring(firstDigitIndex);
             if (int.TryParse(numberPart, out int number))
             {
                 circuitComponent.SetComponentData(componentName, type, number);
+            }
+            else
+            {
+                circuitComponent.SetComponentData(componentName, type, 1);
             }
         }
 

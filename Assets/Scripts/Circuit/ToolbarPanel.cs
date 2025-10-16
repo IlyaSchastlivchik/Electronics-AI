@@ -4,7 +4,6 @@ using UnityEngine.UI;
 public class ToolbarPanel : MonoBehaviour
 {
     [SerializeField] private GameObject componentButtonPrefab;
-
     private ComponentClass _componentClass;
 
     public void Initialize(ComponentClass componentClass)
@@ -15,13 +14,11 @@ public class ToolbarPanel : MonoBehaviour
 
     private void GenerateToolbarButtons()
     {
-        // Очищаем панель от старых кнопок
         foreach (Transform child in transform)
         {
             Destroy(child.gameObject);
         }
 
-        // Создаем кнопки для каждого подкласса
         foreach (ComponentSubclass subclass in _componentClass.subclasses)
         {
             GameObject button = Instantiate(componentButtonPrefab, transform);
@@ -33,7 +30,6 @@ public class ToolbarPanel : MonoBehaviour
                 buttonScript.Initialize(subclass);
             }
         }
-
         ForceLayoutUpdate();
     }
 
@@ -47,6 +43,12 @@ public class ToolbarPanel : MonoBehaviour
         }
     }
 
+    // НОВЫЙ МЕТОД: мост для вызова из ToolbarButton
+    public void CreateComponentFromButton(ComponentSubclass subclass)
+    {
+        CreateComponent(subclass);
+    }
+
     private void Update()
     {
         if (!gameObject.activeSelf) return;
@@ -55,25 +57,28 @@ public class ToolbarPanel : MonoBehaviour
         {
             if (Input.GetKeyDown(subclass.hotkey))
             {
-                CreateComponent(subclass.prefab);
+                CreateComponent(subclass);
                 break;
             }
         }
 
-        // Закрытие панели по Escape
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             gameObject.SetActive(false);
         }
     }
 
-    private void CreateComponent(GameObject prefab)
+    private void CreateComponent(ComponentSubclass subclass)
     {
-        GameObject newComponent = Instantiate(prefab);
-        ComponentDragger dragger = newComponent.AddComponent<ComponentDragger>();
-        dragger.Initialize(_componentClass.id);
+        GameObject newComponent = Instantiate(subclass.prefab);
+        ComponentDragger dragger = newComponent.GetComponent<ComponentDragger>();
+        if (dragger == null)
+        {
+            dragger = newComponent.AddComponent<ComponentDragger>();
+        }
 
-        // Закрываем все панели инструментов после создания компонента
+        dragger.Initialize(_componentClass.id, subclass);
+
         if (MainMenuManager.Instance != null)
         {
             MainMenuManager.Instance.CloseAllToolbarPanels();
